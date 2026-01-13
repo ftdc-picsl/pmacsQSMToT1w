@@ -211,7 +211,7 @@ def t1w_to_qsm_pipeline():
 
     # Mask DKT31 labels by GM in T1w space, then resample to QSM space
     dkt31_bids = bids_helpers.BIDSImage(antsnetct_dataset,
-                                        t1w_bids.get_derivative_rel_path_prefix() + '_seg-dkt31Masked_dseg.nii.gz')
+                                        t1w_bids.get_derivative_rel_path_prefix() + '_seg-dkt31Propagated_dseg.nii.gz')
 
     hoa_seg_bids = bids_helpers.BIDSImage(antsnetct_dataset, t1w_bids.get_derivative_rel_path_prefix() +
                                           '_seg-hoaMasked_dseg.nii.gz')
