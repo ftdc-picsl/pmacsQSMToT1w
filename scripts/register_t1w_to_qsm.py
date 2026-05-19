@@ -9,6 +9,7 @@ import glob
 import json
 import logging
 import os
+import shutil
 import sys
 import tempfile
 
@@ -101,7 +102,7 @@ def t1w_to_qsm_pipeline():
     logger.info('Input dataset path: ' + input_dataset)
     logger.info('Input dataset name: ' + input_dataset_description['Name'])
 
-    output_dataset_link_paths = [os.path.abspath(input_dataset)]
+    output_dataset_link_paths = [os.path.abspath(input_dataset), os.path.abspath(antsnetct_dataset)]
 
     bids_helpers.update_output_dataset(output_dataset, input_dataset_description['Name'] + '_t1w_to_qsm',
                                        output_dataset_link_paths)
@@ -238,6 +239,20 @@ def t1w_to_qsm_pipeline():
                                                  '_space-qsm_seg-hoa_dseg.nii.gz',
                                                  metadata={'Sources': [hoa_seg_bids.get_uri(relative=False)]})
 
+    # Copy T1w stats to help with analysis
+    t1w_derivative_prefix = t1w_bids.get_derivative_prefix()
+
+    antsnetct_stats_paths = glob.glob(os.path.join(t1w_derivative_prefix, "*.tsv"))
+
+    # Make a directory for the output stats
+    os.makedirs(os.path.join(output_dataset, f'sub-{participant}', f'ses-{session}', 'anat', 't1w_stats'), exist_ok=True)
+
+    for antsnetct_stats_path in antsnetct_stats_paths:
+        output_stats_path = os.path.join(input_dataset, f"sub-{participant}", f"ses-{session}", "anat", "t1w_stats",
+                                         os.path.basename(antsnetct_stats_path))
+        shutil.copyfile(antsnetct_stats_path, output_stats_path)
+        if args.verbose:
+            logger.info(f'Copied {antsnetct_stats_path} -> {output_stats_path}')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

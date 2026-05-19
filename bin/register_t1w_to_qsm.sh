@@ -91,6 +91,14 @@ for line in $(cat ${imageList}); do
   participant=$(echo ${line} | cut -d ',' -f 1)
   session=$(echo ${line} | cut -d ',' -f 2)
 
+  # Check if output exists under the output bids dataset, and skip if so
+  session_outdir="${output_dataset}/sub-${participant}/ses-${session}/anat"
+
+  if [ -d "${session_outdir}" ]; then
+    echo "Output directory ${session_outdir} already exists, skipping participant ${participant}, session ${session}"
+    continue
+  fi
+
   echo "Submitting registration for participant ${participant}, session ${session}"
 
   bsub \
