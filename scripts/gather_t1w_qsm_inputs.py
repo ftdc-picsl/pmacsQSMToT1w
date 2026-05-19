@@ -252,6 +252,9 @@ def select_best_t1w_image(t1w_bids_list):
         return t1w_bids_list[0]
 
     # List of t1ws of each type
+    abcd = list()
+    abcdnd = list()
+    mprage1 = list()
     vnavpass = list()
     vnavmoco = list()
     recnorm = list()
@@ -261,7 +264,13 @@ def select_best_t1w_image(t1w_bids_list):
 
     for t1w_bids in t1w_bids_list:
         entities = t1w_bids.get_file_entities()
-        if entities.get('acq', None) == 'vnavpass':
+        if entities.get('acq', None) == 'ABCD800um':
+            abcd.append(t1w_bids)
+        elif entities.get('acq', None) == 'ABCD800umxND':
+            abcdnd.append(t1w_bids)
+        elif entities.get('acq', None) == 'MPRAGE1mm':
+            mprage1.append(t1w_bids)
+        elif entities.get('acq', None) == 'vnavpass':
             vnavpass.append(t1w_bids)
         elif entities.get('acq', None) == 'vnavmoco':
             vnavmoco.append(t1w_bids)
@@ -272,6 +281,12 @@ def select_best_t1w_image(t1w_bids_list):
         else:
             others.append(t1w_bids)
 
+    if len(abcd) > 0:
+        return get_last_run(abcd)
+    if len(abcdnd) > 0:
+        return get_last_run(abcdnd)
+    if len(mprage1) > 0:
+        return get_last_run(mprage1)
     if len(vnavpass) > 0:
         return get_last_run(vnavpass)
     if len(vnavmoco) > 0:
