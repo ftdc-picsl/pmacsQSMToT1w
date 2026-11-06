@@ -13,7 +13,7 @@ container="${repoDir}/containers/antsnetct-0.6.2.sif"
 
 function usage() {
   echo "Usage:
-  $0 antsnetct_dataset -a antsnetct_dataset -o output_dataset -q qsm_dir subj_sess_list.csv
+  $0 -a antsnetct_dataset -o output_dataset -q qsm_dir subj_sess_list.csv
   "
 }
 
