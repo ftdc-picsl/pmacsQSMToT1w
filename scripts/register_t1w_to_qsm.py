@@ -210,45 +210,29 @@ def t1w_to_qsm_pipeline():
                               qsm_image_bids.get_rel_path(),
                               metadata={'Sources': [qsm_image_bids.get_uri(relative=False)]})
 
-    # Mask DKT31 labels by GM in T1w space, then resample to QSM space
-    dkt31_bids = bids_helpers.BIDSImage(antsnetct_dataset,
-                                        t1w_bids.get_derivative_rel_path_prefix() + '_seg-dkt31Propagated_dseg.nii.gz')
-
-    hoa_seg_bids = bids_helpers.BIDSImage(antsnetct_dataset, t1w_bids.get_derivative_rel_path_prefix() +
-                                          '_seg-hoaMasked_dseg.nii.gz')
-
-    dkt31_in_qsm_space = ants_helpers.apply_transforms(qsm_image_bids.get_path(), dkt31_bids.get_path(),
+    # resample labels to QSM space
+    for label_image in glob.glob(os.path.join(antsnetct_dataset, f"{t1w_bids.get_derivative_rel_path_prefix()}*_dseg.nii.gz")):
+        label_image_bids = bids_helpers.BIDSImage(antsnetct_dataset, label_image)
+        label_in_qsm_space = ants_helpers.apply_transforms(qsm_image_bids.get_path(), label_image_bids.get_path(),
                                                            [f"{t1w_to_qsm_reg_output_prefix}0GenericAffine.mat"],
                                                            work_dir,
                                                            interpolation='GenericLabel',
                                                            single_precision=True)
 
-    dkt31_in_qsm_bids = bids_helpers.image_to_bids(dkt31_in_qsm_space, output_dataset,
-                                                   qsm_image_bids.get_derivative_rel_path_prefix() + \
-                                                    '_space-qsm_seg-dkt31_dseg.nii.gz',
-                                                   metadata={'Sources': [dkt31_bids.get_uri(relative=False)]})
+        label_name = label_image_bids.get_entity('seg')
 
-    hoa_in_qsm_space = ants_helpers.apply_transforms(qsm_image_bids.get_path(), hoa_seg_bids.get_path(),
-                                                         [f"{t1w_to_qsm_reg_output_prefix}0GenericAffine.mat"],
-                                                         work_dir,
-                                                         interpolation='GenericLabel',
-                                                         single_precision=True)
-
-    hoa_in_qsm_bids = bids_helpers.image_to_bids(hoa_in_qsm_space, output_dataset,
-                                                 qsm_image_bids.get_derivative_rel_path_prefix() +
-                                                 '_space-qsm_seg-hoa_dseg.nii.gz',
-                                                 metadata={'Sources': [hoa_seg_bids.get_uri(relative=False)]})
+        label_in_qsm_bids = bids_helpers.image_to_bids(label_in_qsm_space, output_dataset,
+                                                       t1w_bids.get_derivative_rel_path_prefix() +
+                                                         f"_space-qsm_seg-{label_name}_dseg.nii.gz")
 
     # Copy T1w stats to help with analysis
-    t1w_derivative_prefix = t1w_bids.get_derivative_prefix()
-
-    antsnetct_stats_paths = glob.glob(os.path.join(t1w_derivative_prefix, "*.tsv"))
+    antsnetct_stats_paths = glob.glob(os.path.join(antsnetct_dataset, f"{t1w_bids.get_derivative_rel_path_prefix()}*.tsv"))
 
     # Make a directory for the output stats
     os.makedirs(os.path.join(output_dataset, f'sub-{participant}', f'ses-{session}', 'anat', 't1w_stats'), exist_ok=True)
 
     for antsnetct_stats_path in antsnetct_stats_paths:
-        output_stats_path = os.path.join(input_dataset, f"sub-{participant}", f"ses-{session}", "anat", "t1w_stats",
+        output_stats_path = os.path.join(output_dataset, f"sub-{participant}", f"ses-{session}", "anat", "t1w_stats",
                                          os.path.basename(antsnetct_stats_path))
         shutil.copyfile(antsnetct_stats_path, output_stats_path)
         if args.verbose:
