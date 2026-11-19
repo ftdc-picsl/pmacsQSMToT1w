@@ -236,8 +236,8 @@ def select_best_t1w_image(t1w_bids_list):
 
     If there is only one image in the list, it is returned.
 
-    If there are multiple images, the one with the highest resolution (smallest voxel size) is selected.
-    If there is a tie in resolution, the image with the smallest file size is selected.
+    If there are multiple images, they are selected in order of preference based on the acquisition type,
+    and the last run is selected if there are multiple images of the same type.
 
     Args:
         t1w_bids_list (list): List of BIDSImage objects representing T1w images.
@@ -258,26 +258,41 @@ def select_best_t1w_image(t1w_bids_list):
     vnavpass = list()
     vnavmoco = list()
     recnorm = list()
+    acqaxmprage = list()
+    acqsag_recRescaledT1Head = list()
+    acqsag_recgradwarp = list()
     acqsag = list()
+    nacc_disco = list()
+    nacc_nd = list()
     others = list()
 
 
     for t1w_bids in t1w_bids_list:
         entities = t1w_bids.get_file_entities()
-        if entities.get('acq', None) == 'ABCD800um':
+        if entities.get('acq') == 'ABCD800um':
             abcd.append(t1w_bids)
-        elif entities.get('acq', None) == 'ABCD800umxND':
+        elif entities.get('acq') == 'ABCD800umxND':
             abcdnd.append(t1w_bids)
-        elif entities.get('acq', None) == 'MPRAGE1mm':
+        elif entities.get('acq') == 'MPRAGE1mm':
             mprage1.append(t1w_bids)
-        elif entities.get('acq', None) == 'vnavpass':
+        elif entities.get('acq') == 'vnavpass':
             vnavpass.append(t1w_bids)
-        elif entities.get('acq', None) == 'vnavmoco':
+        elif entities.get('acq') == 'vnavmoco':
             vnavmoco.append(t1w_bids)
-        elif entities.get('rec', None) == 'norm':
+        elif entities.get('rec') == 'norm':
             recnorm.append(t1w_bids)
-        elif entities.get('acq', None) == 'sag':
+        elif entities.get('acq') == 'axmprage':
+            acqaxmprage.append(t1w_bids)
+        elif entities.get('acq') == 'sag' and entities.get('rec') == 'RescaledT1Head':
+            acqsag_recRescaledT1Head.append(t1w_bids)
+        elif entities.get('acq') == 'sag' and entities.get('rec') == 'gradwarp':
+            acqsag_recgradwarp.append(t1w_bids)
+        elif entities.get('acq') == 'sag':
             acqsag.append(t1w_bids)
+        elif entities.get('acq') == '800um' and entities.get('rec') == 'disco':
+            nacc_disco.append(t1w_bids)
+        elif entities.get('acq') == '800um' and entities.get('rec') == 'ND':
+            nacc_nd.append(t1w_bids)
         else:
             others.append(t1w_bids)
 
@@ -293,8 +308,18 @@ def select_best_t1w_image(t1w_bids_list):
         return get_last_run(vnavmoco)
     if len(recnorm) > 0:
         return get_last_run(recnorm)
+    if len(acqaxmprage) > 0:
+        return get_last_run(acqaxmprage)
+    if len(acqsag_recRescaledT1Head) > 0:
+        return get_last_run(acqsag_recRescaledT1Head)
+    if len(acqsag_recgradwarp) > 0:
+        return get_last_run(acqsag_recgradwarp)
     if len(acqsag) > 0:
         return get_last_run(acqsag)
+    if len(nacc_disco) > 0:
+        return get_last_run(nacc_disco)
+    if len(nacc_nd) > 0:
+        return get_last_run(nacc_nd)
     return get_last_run(others)
 
 
